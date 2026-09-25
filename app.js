@@ -41,7 +41,12 @@ const smallIds=['AND','LIE','LUX','SMR','MCO','VAT','MLT'];
 // Place touch targets above every country so surrounding polygons cannot hide them.
 const microTargets=layer.selectAll('.micro-target').data(COUNTRIES.filter(c=>smallIds.includes(c.id))).join('circle').attr('class','micro-target').attr('cx',d=>projection(d.point)[0]).attr('cy',d=>projection(d.point)[1]).attr('r',18).attr('fill','transparent').attr('aria-hidden','true').on('click',(e,d)=>{if(!e.defaultPrevented)selectCountry(d.id);});
 const micro=layer.selectAll('.micro').data(COUNTRIES.filter(c=>smallIds.includes(c.id))).join('circle').attr('class','micro').attr('data-country',d=>d.id).attr('cx',d=>projection(d.point)[0]).attr('cy',d=>projection(d.point)[1]).attr('r',7).attr('role','button').attr('tabindex','0');
-const zoom=d3.zoom().scaleExtent([1,14]).translateExtent([[-300,-200],[1300,930]]).on('zoom',e=>{layer.attr('transform',e.transform);micro.attr('r',7/e.transform.k);microTargets.attr('r',18/e.transform.k);});
+const zoom=d3.zoom().clickDistance(8).filter(event=>{
+ // The full map needs no panning; keep wheel and two-finger zoom available.
+ if((event.ctrlKey&&event.type!=='wheel')||event.button)return false;
+ if(event.type==='mousedown'||event.type==='touchstart')return d3.zoomTransform(svg.node()).k>1||(event.touches?.length??0)>1;
+ return true;
+}).scaleExtent([1,14]).translateExtent([[-300,-200],[1300,930]]).on('zoom',e=>{layer.attr('transform',e.transform);micro.attr('r',7/e.transform.k);microTargets.attr('r',18/e.transform.k);});
 svg.call(zoom).on('dblclick.zoom',null);
 $('#zoom-in').onclick=()=>svg.transition().duration(180).call(zoom.scaleBy,1.6);
 $('#zoom-out').onclick=()=>svg.transition().duration(180).call(zoom.scaleBy,1/1.6);
