@@ -11,3 +11,5 @@
 .locked .country.answered-failed:hover{fill:#e69491;stroke:#b34e4b}
 
 .country-group:focus-visible .country.answered-correct{fill:#aeb6bf}.country-group:focus-visible .country.answered-failed{fill:#e69491}
+
+#welcome-title:focus{outline:none}.welcome-options .secondary:hover{background:#dde6ff}
