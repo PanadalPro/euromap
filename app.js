@@ -1,8 +1,8 @@
 'use strict';
 const $=s=>document.querySelector(s);
 const TEXT={
- es:{'capital-map':'Capitales · mapa',pickCapital:'Selecciona una capital',identifyCapital:'¿Qué capital es?',capitalMapAria:'Mapa de Europa con capitales. Selecciona un punto y escribe su nombre.',map:'Mapa · encuentra','map-choice':'Mapa · elige','map-write':'Mapa · escribe',pickCountry:'Selecciona un país',identifyCountry:'¿Qué país es?',countryPlaceholder:'País',choice:'Capitales · elige',write:'Capitales · escribe',restart:'Nueva ronda',find:'Encuentra',choose:'Capital de',type:'Capital de',check:'Comprobar',skip:'No lo sé',placeholder:'Capital',perfect:'Correcto',reveal:'Respuesta',completed:'Ronda completada',again:'Volver a jugar',territory:'Territorio',zoomIn:'Ampliar',zoomOut:'Reducir',reset:'Restablecer vista',practice:'Práctica',language:'Idioma',mapAria:'Mapa de Europa. Tab para recorrer territorios, Intro para seleccionar y flechas para mover el mapa.',score:'Puntuación',selected:'Has seleccionado',retry:'1 intento restante'},
- ca:{'capital-map':'Capitals · mapa',pickCapital:'Selecciona una capital',identifyCapital:'Quina capital és?',capitalMapAria:'Mapa d’Europa amb capitals. Selecciona un punt i escriu-ne el nom.',map:'Mapa · troba','map-choice':'Mapa · tria','map-write':'Mapa · escriu',pickCountry:'Selecciona un país',identifyCountry:'Quin país és?',countryPlaceholder:'País',choice:'Capitals · tria',write:'Capitals · escriu',restart:'Nova ronda',find:'Troba',choose:'Capital de',type:'Capital de',check:'Comprovar',skip:'No ho sé',placeholder:'Capital',perfect:'Correcte',reveal:'Resposta',completed:'Ronda completada',again:'Torna a jugar',territory:'Territori',zoomIn:'Ampliar',zoomOut:'Reduir',reset:'Restablir la vista',practice:'Pràctica',language:'Llengua',mapAria:'Mapa d’Europa. Tab per recórrer territoris, Retorn per seleccionar i fletxes per moure el mapa.',score:'Puntuació',selected:'Has seleccionat',retry:'1 intent restant'}
+ es:{'capital-map-choice':'Capitales · mapa · elige',capitalMapChoiceAria:'Mapa de Europa con capitales. Selecciona un punto y elige su nombre entre cuatro opciones.','capital-map':'Capitales · mapa',pickCapital:'Selecciona una capital',identifyCapital:'¿Qué capital es?',capitalMapAria:'Mapa de Europa con capitales. Selecciona un punto y escribe su nombre.',map:'Mapa · encuentra','map-choice':'Mapa · elige','map-write':'Mapa · escribe',pickCountry:'Selecciona un país',identifyCountry:'¿Qué país es?',countryPlaceholder:'País',choice:'Capitales · elige',write:'Capitales · escribe',restart:'Nueva ronda',find:'Encuentra',choose:'Capital de',type:'Capital de',check:'Comprobar',skip:'No lo sé',placeholder:'Capital',perfect:'Correcto',reveal:'Respuesta',completed:'Ronda completada',again:'Volver a jugar',territory:'Territorio',zoomIn:'Ampliar',zoomOut:'Reducir',reset:'Restablecer vista',practice:'Práctica',language:'Idioma',mapAria:'Mapa de Europa. Tab para recorrer territorios, Intro para seleccionar y flechas para mover el mapa.',score:'Puntuación',selected:'Has seleccionado',retry:'1 intento restante'},
+ ca:{'capital-map-choice':'Capitals · mapa · tria',capitalMapChoiceAria:'Mapa d’Europa amb capitals. Selecciona un punt i tria’n el nom entre quatre opcions.','capital-map':'Capitals · mapa',pickCapital:'Selecciona una capital',identifyCapital:'Quina capital és?',capitalMapAria:'Mapa d’Europa amb capitals. Selecciona un punt i escriu-ne el nom.',map:'Mapa · troba','map-choice':'Mapa · tria','map-write':'Mapa · escriu',pickCountry:'Selecciona un país',identifyCountry:'Quin país és?',countryPlaceholder:'País',choice:'Capitals · tria',write:'Capitals · escriu',restart:'Nova ronda',find:'Troba',choose:'Capital de',type:'Capital de',check:'Comprovar',skip:'No ho sé',placeholder:'Capital',perfect:'Correcte',reveal:'Resposta',completed:'Ronda completada',again:'Torna a jugar',territory:'Territori',zoomIn:'Ampliar',zoomOut:'Reduir',reset:'Restablir la vista',practice:'Pràctica',language:'Llengua',mapAria:'Mapa d’Europa. Tab per recórrer territoris, Retorn per seleccionar i fletxes per moure el mapa.',score:'Puntuació',selected:'Has seleccionat',retry:'1 intent restant'}
 };
 function normalize(s){return s.normalize('NFC').toLocaleLowerCase().trim().replace(/\s+/g,' ');}
 function accentBase(s){return s.normalize('NFD').replace(/[\u0300-\u0308]/g,'').normalize('NFC');}
@@ -26,8 +26,9 @@ const byId=Object.fromEntries(COUNTRIES.map(c=>[c.id,c]));
 let savedLanguage;try{savedLanguage=localStorage.getItem('europa.language');}catch{}
 let language=['es','ca'].includes(savedLanguage)?savedLanguage:'es',mode='map',advanceTimer=null;
 const makeRound=()=>({order:shuffle(COUNTRIES.map(c=>c.id)),index:0,answers:[],options:[],draft:'',misses:[],selected:null,complete:false});
-const rounds={map:makeRound(),'map-choice':makeRound(),'map-write':makeRound(),choice:makeRound(),write:makeRound(),'capital-map':makeRound()};
-const isIdentification=()=>mode==='map-choice'||mode==='map-write'||mode==='capital-map';
+const rounds={map:makeRound(),'map-choice':makeRound(),'map-write':makeRound(),choice:makeRound(),write:makeRound(),'capital-map':makeRound(),'capital-map-choice':makeRound()};
+const isCapitalMap=()=>mode==='capital-map'||mode==='capital-map-choice';
+const isIdentification=()=>mode==='map-choice'||mode==='map-write'||isCapitalMap();
 const isMapMode=()=>mode==='map'||isIdentification();
 const isWritten=()=>mode==='write'||mode==='map-write'||mode==='capital-map';
 const current=()=>rounds[mode];
@@ -83,7 +84,7 @@ $('#zoom-out').onclick=()=>svg.transition().duration(180).call(zoom.scaleBy,1/1.
 $('#zoom-reset').onclick=()=>svg.transition().duration(180).call(zoom.transform,d3.zoomIdentity);
 svg.on('keydown',e=>{const dirs={ArrowLeft:[60,0],ArrowRight:[-60,0],ArrowUp:[0,60],ArrowDown:[0,-60]};if(dirs[e.key]){e.preventDefault();svg.call(zoom.translateBy,...dirs[e.key]);}});
 function selectCountry(id,capitalPoint=false){
- if(mode==='capital-map'&&!capitalPoint)return;
+ if(isCapitalMap()&&!capitalPoint)return;
  const r=current();if(!isMapMode()||!byId[id]||r.complete||answered(r))return;
  if(!isIdentification()){submit(id);return;}
  if(r.answers.some(a=>a.countryId===id)||r.selected===id)return;
@@ -134,9 +135,9 @@ function feedbackHTML(a,c){
 }
 function renderCapital(r,c){
  const panel=$('#capital-panel'),a=r.answers[r.index];panel.innerHTML='';
- if(mode==='choice'||mode==='map-choice'){
+ if(mode==='choice'||mode==='map-choice'||mode==='capital-map-choice'){
   const box=document.createElement('div');box.className='options';
-  makeOptions(r).forEach(id=>{const button=document.createElement('button');button.className='option'+(a&&(id===c.id?' correct':id===a.value?' wrong':'')||'');button.disabled=!!a;button.textContent=isIdentification()?byId[id][language]:byId[id].capital[language];button.onclick=()=>submit(id);box.append(button);});panel.append(box);
+  makeOptions(r).forEach(id=>{const button=document.createElement('button');button.className='option'+(a&&(id===c.id?' correct':id===a.value?' wrong':'')||'');button.disabled=!!a;button.textContent=mode==='map-choice'?byId[id][language]:byId[id].capital[language];button.onclick=()=>submit(id);box.append(button);});panel.append(box);
  }else{
   const placeholder=t(mode==='map-write'?'countryPlaceholder':'placeholder');
   panel.innerHTML=`<form class="answer-form"><div class="answer-row"><input id="answer-input" aria-label="${placeholder}" type="text" maxlength="100" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" required placeholder="${placeholder}" ${a?'disabled':''}><button class="primary" type="submit" ${a?'disabled':''}>${t('check')}</button></div></form>`;
@@ -155,7 +156,7 @@ function render(){
  $('#score').textContent=average(r)===null?'—':average(r)+' %';$('#score').setAttribute('aria-label',t('score')+': '+$('#score').textContent);
  $('#question-label').textContent=r.complete||isIdentification()?'':t(mode==='map'?'find':mode==='choice'?'choose':'type');
  $('#question-label').hidden=r.complete||isIdentification();
- $('#country-name').textContent=r.complete?t('completed'):isIdentification()?t(mode==='capital-map'?(c?'identifyCapital':'pickCapital'):(c?'identifyCountry':'pickCountry')):c[language];
+ $('#country-name').textContent=r.complete?t('completed'):isIdentification()?t(isCapitalMap()?(c?'identifyCapital':'pickCapital'):(c?'identifyCountry':'pickCountry')):c[language];
  $('#feedback').innerHTML=r.complete?'':done?feedbackHTML(a,c):mode==='map'&&r.misses.length?`<span class="wrong">${t('selected')}: <strong>${escaped(byId[r.misses.at(-1)][language])}</strong> · ${t('retry')}</span>`:'';
  $('#skip').hidden=done||r.complete||!c;$('#restart').hidden=r.complete;
  $('#map-panel').classList.toggle('locked',done);
@@ -170,9 +171,9 @@ function render(){
    .classed('selected-wrong',d=>enabled&&getId(d)===wrongSelection);
  }
  const locked=id=>done||r.complete||(isIdentification()&&history.has(id));
- const capitals=mode==='capital-map';
+ const capitals=isCapitalMap();
  $('#map-panel').classList.toggle('capital-map',capitals);
- $('#map').setAttribute('aria-label',t(capitals?'capitalMapAria':'mapAria'));
+ $('#map').setAttribute('aria-label',t(capitals?(mode==='capital-map-choice'?'capitalMapChoiceAria':'capitalMapAria'):'mapAria'));
  countryGroups.attr('aria-hidden',capitals?'true':null);
  micro.attr('display',capitals?'none':null);microTargets.attr('display',capitals?'none':null);
  capitalDots.attr('display',capitals?null:'none').attr('aria-hidden',capitals?null:'true')
